@@ -22,10 +22,16 @@ END;
 
 
 -- Trigger pour la cohérence des usines
-CREATE TRIGGER TRG_FACTORY_CHECK
+CREATE TRIGGER TRG_CHECK_FACTORY_DATA
 BEFORE UPDATE OR DELETE ON ROBOTS_FACTORIES
+DECLARE
+    factory_count NUMBER;
+    worker_factory_count NUMBER;
 BEGIN
-    IF (SELECT COUNT(*) FROM FACTORIES) != (SELECT COUNT(*) FROM WORKERS_FACTORY_1) THEN
-        RAISE_APPLICATION_ERROR(-20002, 'Inconsistent factory data.');
+    SELECT COUNT(*) INTO factory_count FROM FACTORIES;
+    SELECT COUNT(*) INTO worker_factory_count FROM WORKERS_FACTORY_1;
+
+    IF factory_count != worker_factory_count THEN
+        RAISE_APPLICATION_ERROR(-20002, 'Mismatch in factory and worker data.');
     END IF;
 END;
