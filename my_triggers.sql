@@ -1,0 +1,31 @@
+-- Trigger pour ALL_WORKERS_ELAPSED
+CREATE TRIGGER TRG_INSERT_WORKERS
+BEFORE INSERT ON ALL_WORKERS_ELAPSED
+FOR EACH ROW
+BEGIN
+    INSERT INTO WORKERS_FACTORY_1 (first_name, last_name, age, first_day)
+    VALUES (:NEW.firstname, :NEW.lastname, :NEW.age, :NEW.start_date);
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Insert not allowed here.');
+END;
+
+
+-- Trigger pour l'audit des robots
+CREATE TRIGGER TRG_ROBOT_AUDIT
+AFTER INSERT ON ROBOTS
+FOR EACH ROW
+BEGIN
+    INSERT INTO AUDIT_ROBOT (robot_id, created_at)
+    VALUES (:NEW.id, SYSDATE);
+END;
+
+
+-- Trigger pour la cohérence des usines
+CREATE TRIGGER TRG_FACTORY_CHECK
+BEFORE UPDATE OR DELETE ON ROBOTS_FACTORIES
+BEGIN
+    IF (SELECT COUNT(*) FROM FACTORIES) != (SELECT COUNT(*) FROM WORKERS_FACTORY_1) THEN
+        RAISE_APPLICATION_ERROR(-20002, 'Inconsistent factory data.');
+    END IF;
+END;
